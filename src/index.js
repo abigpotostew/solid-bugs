@@ -9,8 +9,6 @@ async function getWebId(identityProvider) {
     if (session) {
         return session.webId;
     }
-
-    /* 3. Initiate the login process - this will redirect the user to their Identity Provider: */
     auth.login(identityProvider);
 }
 
@@ -40,7 +38,6 @@ function createAmount(podDocument, amountDecimal, currency) {
     //add vs set. set doesn't work
     amountSubject.addRef(RDF.type, schema.MonetaryAmount) // it is a monetary amount type
 
-
     amountSubject.setString(schema.currency, currency)
     amountSubject.setDecimal(schema.amount, amountDecimal)
 
@@ -49,7 +46,6 @@ function createAmount(podDocument, amountDecimal, currency) {
 }
 
 async function deleteAllSubjectsOfType(podDocument, types) {
-    //delete all existing items
     const deletedSubjects = []
     types.forEach((type) => {
         podDocument.getAllSubjectsOfType(type).forEach(async (s) => {
@@ -58,19 +54,14 @@ async function deleteAllSubjectsOfType(podDocument, types) {
         })
     })
 
-    // the pod respects predicate references.. so by deleting trade, it also deletes the monetary value subjects
-
     console.log("saving deletes for ", types, deletedSubjects)
-    //deletedSubjects.map((ref) => podDocument.getSubject(ref))
     podDocument = await podDocument.save()
     console.log("saved deletes for ", types, deletedSubjects)
     return podDocument
 }
 
 function addButton(value, clickHandler) {
-    //Create an input type dynamically.
     let element = document.createElement("input");
-    //Assign different attributes to the element.
     element.type = "button";
     element.value = value;
     element.name = value;
@@ -81,29 +72,10 @@ function addButton(value, clickHandler) {
 
 
 (async function () {
-    // your page initialization code here
-    // the DOM will be available here
-
     const webId = await getWebId("https://solidcommunity.net");
     const documentUrl = getPodFromWebId(webId)
 
-
-    addButton("1a. Create one", async function(){
-        let podDocument = await initDocument(documentUrl);
-        createAmount(podDocument, 1.0, "USD")
-
-        await podDocument.save()
-
-        console.log("done create one")
-    })
-
-    addButton("1b. Delete All", async function(){
-        let podDocument = await initDocument(documentUrl);
-        await deleteAllSubjectsOfType(podDocument, [schema.MonetaryAmount])
-        console.log("done delete all")
-    })
-
-    addButton("2. Create one then delete--Working", async function(){
+    addButton("1. Create one then delete--Working", async function () {
         let podDocument = await initDocument(documentUrl);
         createAmount(podDocument, 1.0, "USD")
         podDocument = await podDocument.save()
@@ -114,4 +86,18 @@ function addButton(value, clickHandler) {
     })
 
 
+    addButton("2a. Create one", async function () {
+        let podDocument = await initDocument(documentUrl);
+        createAmount(podDocument, 1.0, "USD")
+
+        await podDocument.save()
+
+        console.log("done create one")
+    })
+
+    addButton("2b. Delete All", async function () {
+        let podDocument = await initDocument(documentUrl);
+        await deleteAllSubjectsOfType(podDocument, [schema.MonetaryAmount])
+        console.log("done delete all")
+    })
 })();

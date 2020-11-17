@@ -6,5 +6,5 @@
 `http://localhost:8080`
 
 log in to solidcommunity.net
-Click button 2. it will work OK
-Click button 1a then 1b. It breaks
+Click button 1. it will work OK
+Click button 2a then 2b. It breaks.
