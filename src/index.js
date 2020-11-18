@@ -71,8 +71,8 @@ function addButton(value, clickHandler) {
 
     addButton("1. Create one then delete, reuse doc -- Working", async function () {
         let podDocument = await initDocument(documentUrl);
-        let amt = createAmount(podDocument, 1.0, "USD")
-        podDocument = await podDocument.save([amt])
+        createAmount(podDocument, 1.0, "USD")
+        podDocument = await podDocument.save()
 
         await deleteAllSubjectsOfType(podDocument)
         await podDocument.save()
@@ -81,7 +81,7 @@ function addButton(value, clickHandler) {
 
     addButton("2. Create one then delete, different doc -- BROKEN", async function () {
         let podDocument = await initDocument(documentUrl);
-        createAmount(podDocument, 1.0, "USD")
+        const amt = createAmount(podDocument, 1.0, "USD")
 
         await podDocument.save()
         console.log("done create one")
