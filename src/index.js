@@ -81,7 +81,7 @@ function addButton(value, clickHandler) {
 
     addButton("2. Create one then delete, different doc -- BROKEN", async function () {
         let podDocument = await initDocument(documentUrl);
-        const amt = createAmount(podDocument, 1.0, "USD")
+        createAmount(podDocument, 1.0, "USD")
 
         await podDocument.save()
         console.log("done create one")
@@ -90,5 +90,41 @@ function addButton(value, clickHandler) {
         await deleteAllSubjectsOfType(podDocument)
         await podDocument.save()
         console.log("done create one then delete")
+    })
+
+    addButton("bug report code", async function(){
+//login
+const session = await auth.currentSession();
+if (!session) {
+    await auth.login("https://solidcommunity.net");
+}
+
+// get pod doc url
+const a = document.createElement('a');
+a.href = webId;
+const documentUrl = `${a.protocol}//${a.hostname}/private/tmp/tripledoc-bug.ttl`;
+
+// get document
+let podDocument = null
+try {
+    podDocument = await fetchDocument(documentUrl);
+} catch (err) {
+    podDocument = await createDocument(documentUrl);
+}
+
+// create subject and save
+const amountSubject = podDocument.addSubject()
+amountSubject.addRef(RDF.type, schema.MonetaryAmount)
+amountSubject.setString(schema.currency, "USD")
+amountSubject.setDecimal(schema.amount, 1.0)
+await podDocument.save()
+
+// fetch document against, delete the subject, and save
+podDocument = await fetchDocument(documentUrl);
+podDocument.getAllSubjectsOfType(schema.MonetaryAmount).forEach((s) => {
+    podDocument.removeSubject(s.asRef())
+})
+// this call returns 409
+await podDocument.save()
     })
 })();
