@@ -9,7 +9,7 @@ async function getWebId(identityProvider) {
     if (session) {
         return session.webId;
     }
-    auth.login(identityProvider);
+    await auth.login(identityProvider);
 }
 
 export function getPodFromWebId(webId) {
@@ -35,29 +35,24 @@ async function initDocument(documentUrl) {
 function createAmount(podDocument, amountDecimal, currency) {
 
     const amountSubject = podDocument.addSubject()
-    //add vs set. set doesn't work
     amountSubject.addRef(RDF.type, schema.MonetaryAmount) // it is a monetary amount type
-
     amountSubject.setString(schema.currency, currency)
     amountSubject.setDecimal(schema.amount, amountDecimal)
-
     console.log("Created",amountSubject.asRef())
     return amountSubject
 }
 
-async function deleteAllSubjectsOfType(podDocument, types) {
+function getWebIdFromSubjectId(subjectId) {
+    return `#${subjectId.split('#')[1]}`
+}
+
+async function deleteAllSubjectsOfType(podDocument) {
     const deletedSubjects = []
-    types.forEach((type) => {
-        podDocument.getAllSubjectsOfType(type).forEach(async (s) => {
-            deletedSubjects.push(s.asRef())
-            podDocument.removeSubject(s.asRef())
-        })
+    podDocument.getAllSubjectsOfType(schema.MonetaryAmount).forEach( (s) => {
+        deletedSubjects.push(getWebIdFromSubjectId(s.asRef()))
+        podDocument.removeSubject(getWebIdFromSubjectId(s.asRef()))
     })
 
-    console.log("saving deletes for ", types, deletedSubjects)
-    podDocument = await podDocument.save()
-    console.log("saved deletes for ", types, deletedSubjects)
-    return podDocument
 }
 
 function addButton(value, clickHandler) {
@@ -70,34 +65,30 @@ function addButton(value, clickHandler) {
     document.body.appendChild(element);
 }
 
-
 (async function () {
     const webId = await getWebId("https://solidcommunity.net");
     const documentUrl = getPodFromWebId(webId)
 
-    addButton("1. Create one then delete--Working", async function () {
+    addButton("1. Create one then delete, reuse doc -- Working", async function () {
         let podDocument = await initDocument(documentUrl);
-        createAmount(podDocument, 1.0, "USD")
-        podDocument = await podDocument.save()
-        await deleteAllSubjectsOfType(podDocument, [schema.MonetaryAmount])
+        let amt = createAmount(podDocument, 1.0, "USD")
+        podDocument = await podDocument.save([amt])
 
-        //todo add stuff
+        await deleteAllSubjectsOfType(podDocument)
+        await podDocument.save()
         console.log("done create one then delete")
     })
 
-
-    addButton("2a. Create one", async function () {
+    addButton("2. Create one then delete, different doc -- BROKEN", async function () {
         let podDocument = await initDocument(documentUrl);
         createAmount(podDocument, 1.0, "USD")
 
         await podDocument.save()
-
         console.log("done create one")
-    })
 
-    addButton("2b. Delete All", async function () {
-        let podDocument = await initDocument(documentUrl);
-        await deleteAllSubjectsOfType(podDocument, [schema.MonetaryAmount])
-        console.log("done delete all")
+        podDocument = await initDocument(documentUrl);
+        await deleteAllSubjectsOfType(podDocument)
+        await podDocument.save()
+        console.log("done create one then delete")
     })
 })();
